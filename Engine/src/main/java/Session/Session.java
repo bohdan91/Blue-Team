@@ -7,12 +7,12 @@ import Components.Log;
 import com.google.gson.Gson;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Level;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static Models.GameConstants.BOARD_WIDTH;
 
@@ -146,6 +146,50 @@ public class Session {
     public String addPlayer(String username, String macAddress, String team) {
         Player newPlayer = null;
 
+        //Validating Username
+
+        //Validates Just Letters and Length from 3-12 chars
+        String lengthNoNumberPattern = "^[a-zA-Z]{3,12}$";
+        Pattern lengthNoNumber;
+        Matcher matcher;
+        lengthNoNumber = Pattern.compile(lengthNoNumberPattern);
+        matcher = lengthNoNumber.matcher(username);
+
+        if(!matcher.matches()) {
+            return "Must be 12 characters or less and contain only upper and lower case letters.";
+        }
+
+        HashSet<String> badWords;
+        badWords = Dictionaries.getDictionaries().getBadWords();
+        Iterator<String> badWordIterator = badWords.iterator();
+        String uN = username.toUpperCase();
+
+        while(badWordIterator.hasNext()) {
+            String badWordFromList = badWordIterator.next();
+            String badWordPattern =".*(" + badWordFromList + ").*";
+            Pattern badWordInUsername;
+            Matcher matcher2;
+            badWordInUsername = Pattern.compile(badWordPattern);
+            matcher2 = badWordInUsername.matcher(uN);
+
+            if(matcher2.matches()) {
+                if(uN.indexOf(badWordFromList) > 0) {
+                    boolean okayName = false;
+                    HashSet<String> engWords = Dictionaries.getDictionaries().getEnglishWords();
+                    String testWord = uN.charAt(uN.indexOf(badWordFromList) - 1) + badWordFromList;
+                    for(String word : engWords){
+                        if(word.contains(testWord)) {
+                            okayName = true;
+                            break;
+                        }
+                    }
+                    if(okayName == false)
+                        return "Bad Word Detected";
+                }
+                else
+                    return "Bad Word Detected";
+            }
+        }
         //validating the team name
         if (team.toUpperCase().compareTo("GREEN") != 0 && team.toUpperCase().compareTo("GOLD") != 0
                 && team != "" && team != null) {
@@ -290,7 +334,7 @@ public class Session {
                     wordToPlay += each.getLetter();
             }
             String temp = session.playWord(move.getStartX(), move.getStartY(), move.isHorizontal(), wordToPlay, skyCat);
-            if(temp.compareTo("Invalid") == 0){
+            if(temp.compareTo("VALID") != 0){
                 return false;
             }
             return true;
@@ -768,7 +812,7 @@ public class Session {
         } else if(ts[0] > ts[1]) {
             dbQueries.updateWin("green");
             dbQueries.updateLose("gold");
-        } else if(ts[0] == ts[1]) {
+        } else if(ts[0] == ts[1] && ts[0] != 0 && ts[1] != 0) {
             dbQueries.updateTie();
         }
     }

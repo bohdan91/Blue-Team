@@ -94,6 +94,9 @@ function exchange(el) {
                 $('#' + coord + " img").remove();
             })
 
+            // clear current img so user doesn't have access to it anymore
+            currentImg = null;
+
             break;
     }
 
@@ -292,9 +295,15 @@ function confirmed() {
         }, function (responsetext) {
             var result = responsetext.toUpperCase();
             if (result == "VALID") {
+                // Deep copy new board state global array * only if the play was a success
+                boardState = null;
+                boardState = [...xyCoord];
                 showMessage("Success");
             }
             else if (result == "BONUS") {
+                // Deep copy new board state global array * only if the play was a success
+                boardState = null;
+                boardState = [...xyCoord];
                 showMessage("Bonus word !!");
             }
             else if (result == "PROFANE") {
@@ -317,10 +326,6 @@ function confirmed() {
         });
         // Reset current tile select
         currentImg = null;
-        // Deep copy new board state global array
-        boardState = [...xyCoord
-    ]
-        ;
 
     } catch (e) {
     }
@@ -335,3 +340,9 @@ function confirmed() {
 function showMessage(str) {
     alert(str);
 }
+
+// window.onunload = function () {
+//     $.post("Servlet", {
+//         request: "leave",
+//     });
+// };
